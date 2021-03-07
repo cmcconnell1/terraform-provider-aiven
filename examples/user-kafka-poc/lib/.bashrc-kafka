@@ -1,0 +1,53 @@
+# ref: https://gist.githubusercontent.com/robertorussobob/5ffd57ef03e59b6513fc0b0a9815ca2f/raw/ba12c80d9defc2fa996002223077d8b0e85288ff/.bashrc
+# Kafka shortcuts
+#
+# $ kafka_topics                                                       List all topics
+# $ kafka_describe <topic_name>                                        Display topic attributes
+# $ kafka_topics_describe                                              List all topics with attributes
+# $ kafka_topic_configs <topic_name>                                   Display topic configuration
+# $ kafka_topics_config                                                List all topics and configuration
+# $ kafka_topics_configs_sort_by_config                                List all topics ordered by configuration
+# $ kafka_topic_set_config <topic_name> <new_config_value>             Set the given configuration for the given topic
+# $ kafka_topic_delete_config <topic_name> <config_name_to_be_removed> Remove the given configuration for the given topic
+# $ kafka_consume <topic_name>                                         Output to stdout the topic content
+# $ kafcat <topic_name>                                                Output to stdout the topic content
+# $ kafka_consume_from_beginning <topic_name>                          Output to stdout the topic content from the oldest message
+# $ kafka_topic_offset <topic_name>                                    Display the current offset for each partition
+# $ kafka_consumer_groups                                              Display the consumer groups list
+# $ kafka_consumers <consumer_group_name>                              Display the consumers for the given consumer group
+# $ kafka_partition_count <topic>                                      Display how many partitions the given topic has
+# $ kafka_topic_json <topic>                                                                                      
+# $ kafka_lagging_consumers                                            Display a list of consumers that are lagging
+# $ kafka_topics_with_lagging_consumers                                Display a list of topic that has lagging consumers
+# $ kafka_evacuate_topic <topic>                                       Remove all the messages from the given topic
+# $ kafka_evacuate_topics_with_lagging_consumers                       Remove all messages from each topic with lagging consumers
+# $ kafka_doc                                                          Display this reference
+
+export KAFKA_TOPICS='/opt/apache/kafka/kafka/bin/kafka-topics.sh'
+kafka_topics() { $KAFKA_TOPICS --list --zookeeper localhost:2181 | sort -V; }; export -f kafka_topics
+kafka_describe() { $KAFKA_TOPICS --describe --zookeeper localhost:2181 --topic $1 | grep ^Topic | tr '\t' ' '; }; export -f kafka_describe
+kafka_topics_described() { kafka_topics | xargs -L 1 -P 0 -I A bash -c 'kafka_describe "$@"' _ A | sort -V; }; export -f kafka_topics_described
+kafka_topic_configs() { kafka_describe $1 | sed 's/^Topic:\(.*\) PartitionCount.*Configs:\(.*\)$/\1 \2/'; }; export -f kafka_topic_configs
+kafka_topics_configs() { kafka_topics | xargs -L 1 -P 0 -I A bash -c 'kafka_topic_configs "$@"' _ A | sort -V; }; export -f kafka_topics_configs
+kafka_topics_configs_sort_by_config() { kafka_topics_configs | sed 's/^\(.*\) \(.*\)$/\2 \1/' | sort -V; }; export -f kafka_topics_configs_sort_by_config
+export KAFKA_CONFIGS='/opt/apache/kafka/kafka/bin/kafka-configs.sh'
+kafka_topic_set_config() { $KAFKA_CONFIGS --zookeeper localhost:2181 --entity-type topics --entity-name $1 --alter --add-config $2; }; export -f kafka_topic_set_config
+kafka_topic_delete_config() { $KAFKA_CONFIGS --zookeeper localhost:2181 --entity-type topics --entity-name $1 --alter --delete-config $2; }; export -f kafka_topic_delete_config
+export KAFKA_CONSOLE_CONSUMER='/opt/apache/kafka/kafka/bin/kafka-console-consumer.sh'
+kafka_consume() { $KAFKA_CONSOLE_CONSUMER --bootstrap-server $HOSTNAME:9092 --topic $1 --property print.timestamp=true --property print.key=true --property key.separator=";"; }; export -f kafka_consume
+alias kafcat='kafka_consume'
+kafka_consume_from_beginning() { $KAFKA_CONSOLE_CONSUMER --bootstrap-server $HOSTNAME:9092 --topic $1 --from-beginning --property print.timestamp=true --property print.key=true --property key.separator=";"; }; export -f kafka_consume_from_beginning
+export KAFKA_RUN_CLASS='/opt/apache/kafka/kafka/bin/kafka-run-class.sh'
+kafka_topic_offset() { $KAFKA_RUN_CLASS kafka.tools.GetOffsetShell --broker-list $HOSTNAME:9092 --topic $1 --time -1 --offsets 1 | sort -V; }; export -f kafka_topic_offset
+export KAFKA_CONSUMER_GROUPS='/opt/apache/kafka/kafka/bin/kafka-consumer-groups.sh'
+kafka_consumer_groups() { $KAFKA_CONSUMER_GROUPS --list --bootstrap-server $HOSTNAME:9092 2> /dev/null | sort -V; }; export -f kafka_consumer_groups
+kafka_consumers() { $KAFKA_CONSUMER_GROUPS --bootstrap-server $HOSTNAME:9092 --describe --group $1 | sort -V; }; export -f kafka_consumers
+kafka_partition_count1() { kafka_describe $1 | sed -r 's/.*PartitionCount:([0-9]+) .*/\1/g'; }; export -f kafka_partition_count1
+kafka_partition_count() { kafka_describe $1 | sed -r 's/.*PartitionCount: (.*) Replication.*/\1/g'; }; export -f kafka_partition_count
+kafka_topic_json() { partition_count=$(kafka_partition_count $1); { echo '{ "partitions": [ '; seq 0 $(($partition_count - 2)) | xargs -I A printf "{ \"topic\": \"$1\", \"partition\": A, \"offset\": -1 },\n"; echo "{ \"topic\": \"$1\", \"partition\": $(($partition_count - 1)), \"offset\": 0 }"; echo '], "version": 1 }'; }; }; export -f kafka_topic_json
+kafka_lagging_consumers() { kafka_consumer_groups | xargs -L1 -n1 -P8 -I A bash -c 'kafka_consumers "$@" 2> /dev/null | grep -v " 0 " | grep -v " - " | grep -v "TOPIC" | grep -E -v "^$"' _ A; }; export -f kafka_lagging_consumers
+kafka_topics_with_lagging_consumers() { kafka_lagging_consumers | cut -d ' ' -f 1 | sort | uniq; }; export -f kafka_topics_with_lagging_consumers
+export KAFKA_DELETE_RECORDS="/opt/apache/kafka/kafka/bin/kafka-delete-records.sh --bootstrap-server $HOSTNAME:9092"
+kafka_evacuate_topic() { kafka_topic_json $1 > evacuate_topic.json; $KAFKA_DELETE_RECORDS --offset-json-file evacuate_topic.json; }; export -f kafka_evacuate_topic
+kafka_evacuate_topics_with_lagging_consumers() { kafka_topics_with_lagging_consumers | xargs -L 1 -P 0 -I A bash -c 'kafka_evacuate_topic "$1"' _ A; }; export -f kafka_evacuate_topics_with_lagging_consumers;
+kafka_doc() { head -34 $HOME/.bashrc | tail -22; echo; }; export -f kafka_doc
