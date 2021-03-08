@@ -103,12 +103,12 @@ ssl.key.location=/Users/cmcc/work/aiven/kafkaCerts/service.key
 ssl.certificate.location=/Users/cmcc/work/aiven/kafkaCerts/service.cert
 ssl.ca.location=/Users/cmcc/work/aiven/kafkaCerts/ca.pem
 ```
-- TODO: fix this
 ```console
-kafkacat -F kafkacat.config -t demo-topic
+kkafkacat -F kafkacat.config -t demo-topic
 % Reading configuration from file kafkacat.config
 % Auto-selecting Consumer mode (use -P or -C to override)
-% ERROR: Failed to query metadata for topic demo-topic: Local: Broker transport failure
+% Reached end of topic demo-topic [0] at offset 0
+^C
 ```
 
 - TODO fix this all connectivity issues sad panda
