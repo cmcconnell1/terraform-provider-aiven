@@ -93,15 +93,6 @@ tf apply # [-auto-approve]
   - [Getting Started with Aiven Kafka](https://help.aiven.io/en/articles/489572-getting-started-with-aiven-kafka)
   - [Aiven Examples Kafka Python](https://github.com/aiven/aiven-examples/tree/master/kafka/python)
 
-  - TODO for all kakfa-python, etc. connectivity issues noted below:
-```console
-telnet samplekafka-senior-b7bb.aivencloud.com 26096
-Trying 34.78.56.69...
-^C
-cmcc@cmcc:bin $ telnet 34.78.237.191 26096
-Trying 34.78.237.191...
-^C
-```
 
 - Using Kafkacat
 ```console
