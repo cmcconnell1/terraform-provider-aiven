@@ -97,7 +97,7 @@ tf apply # [-auto-approve]
 - Using Kafkacat
 ```console
 cat kafkacat.config
-bootstrap.servers=samplekafka-senior-b7bb.aivencloud.com:26096
+bootstrap.servers=samplekafka-senior-b7bb.aivencloud.com:26086
 security.protocol=ssl
 ssl.key.location=/Users/cmcc/work/aiven/kafkaCerts/service.key
 ssl.certificate.location=/Users/cmcc/work/aiven/kafkaCerts/service.cert

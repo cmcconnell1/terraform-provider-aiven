@@ -23,9 +23,9 @@ producer = KafkaProducer(
     # https://readthedocs.org/projects/kafka-python/downloads/pdf/master/
     api_version_auto_timeout_ms=3000,
     security_protocol="SSL",
-    ssl_cafile="~/work/aiven/kafkaCerts/ca.pem",
-    ssl_certfile="~/work/aiven/kafkaCerts/service.cert",
-    ssl_keyfile="~/work/aiven/kafkaCerts/service.key",
+    ssl_cafile="/Users/cmcc/work/aiven/kafkaCerts/service.key",
+    ssl_certfile="/Users/cmcc/work/aiven/kafkaCerts/service.cert",
+    ssl_keyfile="/Users/cmcc/work/aiven/kafkaCerts/ca.pem"
 )
 
 for i in range(1, 4):
